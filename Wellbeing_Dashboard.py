@@ -28,11 +28,8 @@ def load_and_clean_excel(file_path):
     full_data = pd.concat(sections, ignore_index=True)
     return full_data
 
-# Path to your original Excel file
-excel_path = "C:/Users/nketi/OneDrive/Desktop/ATDA summative/UK Wellbeing census data comparison .xlsx"
-
-# Load data
-df = load_and_clean_excel(excel_path)
+# ✅ Updated file path for GitHub + Streamlit Cloud
+df = load_and_clean_excel("UK Wellbeing census data comparison .xlsx")
 
 # Dashboard layout
 st.title("📊 UK Wellbeing Comparison Dashboard (2023 vs 2024)")
@@ -76,4 +73,5 @@ with st.expander("⬇️ Download Filtered Data"):
         file_name=f"{metric}_2023_2024_filtered.csv",
         mime="text/csv"
     )
+
 
