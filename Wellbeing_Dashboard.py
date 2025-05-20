@@ -56,7 +56,7 @@ else:
 
 # --- Chart Section ---
 fig = go.Figure(data=[
-    go.Bar(name='2023', x=display_df['Demographic'], y=display_df['2023'], marker_color='teal'),
+    go.Bar(name='2023', x=display_df['Demographic'], y=display_df['2023'], marker_color='deepskyblue'),
     go.Bar(name='2024', x=display_df['Demographic'], y=display_df['2024'], marker_color='darkorchid')
 ])
 
