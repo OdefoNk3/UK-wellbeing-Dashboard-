@@ -28,7 +28,7 @@ def load_and_clean_excel(file_path):
     full_data = pd.concat(sections, ignore_index=True)
     return full_data
 
-# ✅ Updated file path for GitHub + Streamlit Cloud
+# ✅ Load data using filename in GitHub repo
 df = load_and_clean_excel("UK Wellbeing census data comparison .xlsx")
 
 # Dashboard layout
@@ -39,12 +39,17 @@ metric = st.selectbox("1️⃣ Select a Wellbeing Metric", df["Category"].unique
 
 filtered_df = df[df["Category"] == metric]
 
+# ✅ Show only age groups by default
+age_group_defaults = [demo for demo in filtered_df["Demographic"].unique() if "to" in demo]
+
 selected_demos = st.multiselect(
     "2️⃣ Select Demographic Groups (or leave blank to show all)",
     options=filtered_df["Demographic"].unique(),
-    default=filtered_df["Demographic"].unique()
+    default=age_group_defaults,
+    help="By default, only age groups are shown. You can add gender or regions to explore more."
 )
 
+# Apply filter if selection is made
 if selected_demos:
     filtered_df = filtered_df[filtered_df["Demographic"].isin(selected_demos)]
 
@@ -73,5 +78,4 @@ with st.expander("⬇️ Download Filtered Data"):
         file_name=f"{metric}_2023_2024_filtered.csv",
         mime="text/csv"
     )
-
 
