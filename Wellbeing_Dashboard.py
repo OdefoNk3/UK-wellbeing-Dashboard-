@@ -40,7 +40,8 @@ metric = st.selectbox("1️⃣ Select a Wellbeing Metric", df["Category"].unique
 filtered_df = df[df["Category"] == metric]
 
 # ✅ Show only age groups by default
-age_group_defaults = [demo for demo in filtered_df["Demographic"].unique() if "to" in demo]
+age_group_defaults = [demo for demo in filtered_df["Demographic"].unique() if isinstance(demo, str) and "to" in demo]
+
 
 selected_demos = st.multiselect(
     "2️⃣ Select Demographic Groups (or leave blank to show all)",
