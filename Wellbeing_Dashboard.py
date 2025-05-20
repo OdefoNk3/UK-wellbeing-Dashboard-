@@ -28,36 +28,36 @@ def load_and_clean_excel(file_path):
     full_data = pd.concat(sections, ignore_index=True)
     return full_data
 
-# ✅ Load data using filename in GitHub repo
+# Load the dataset
 df = load_and_clean_excel("UK Wellbeing census data comparison .xlsx")
 
 # Dashboard layout
 st.title("📊 UK Wellbeing Comparison Dashboard (2023 vs 2024)")
 
-# --- Filter Section ---
+# --- Select Metric ---
 metric = st.selectbox("1️⃣ Select a Wellbeing Metric", df["Category"].unique())
 
-filtered_df = df[df["Category"] == metric]
+# Define age group demographics
+age_group_demos = [demo for demo in df["Demographic"].unique() if isinstance(demo, str) and "to" in demo]
 
-# ✅ Show only age groups by default
-age_group_defaults = [demo for demo in filtered_df["Demographic"].unique() if isinstance(demo, str) and "to" in demo]
-
-
+# --- Multiselect (starts empty) ---
 selected_demos = st.multiselect(
-    "2️⃣ Select Demographic Groups (or leave blank to show all)",
-    options=filtered_df["Demographic"].unique(),
-    default=age_group_defaults,
-    help="By default, only age groups are shown. You can add gender or regions to explore more."
+    "2️⃣ Select Demographic Groups (optional)",
+    options=df["Demographic"].unique(),
+    default=[],  # Empty by default (no red pills)
+    help="By default, the chart shows age groups. You can select any demographics here to customize the view."
 )
 
-# Apply filter if selection is made
+# Filter logic
 if selected_demos:
-    filtered_df = filtered_df[filtered_df["Demographic"].isin(selected_demos)]
+    display_df = df[(df["Category"] == metric) & (df["Demographic"].isin(selected_demos))]
+else:
+    display_df = df[(df["Category"] == metric) & (df["Demographic"].isin(age_group_demos))]
 
 # --- Chart Section ---
 fig = go.Figure(data=[
-    go.Bar(name='2023', x=filtered_df['Demographic'], y=filtered_df['2023'], marker_color='deepskyblue'),
-    go.Bar(name='2024', x=filtered_df['Demographic'], y=filtered_df['2024'], marker_color='darkorange')
+    go.Bar(name='2023', x=display_df['Demographic'], y=display_df['2023'], marker_color='deepskyblue'),
+    go.Bar(name='2024', x=display_df['Demographic'], y=display_df['2024'], marker_color='darkorange')
 ])
 
 fig.update_layout(
@@ -75,8 +75,7 @@ st.plotly_chart(fig, use_container_width=True)
 with st.expander("⬇️ Download Filtered Data"):
     st.download_button(
         label="Download as CSV",
-        data=filtered_df.to_csv(index=False),
+        data=display_df.to_csv(index=False),
         file_name=f"{metric}_2023_2024_filtered.csv",
         mime="text/csv"
     )
-
