@@ -3,7 +3,7 @@ st.set_page_config(page_title="UK Wellbeing Dashboard", layout="wide")
 
 import pandas as pd
 import plotly.graph_objects as go
-
+from io import BytesIO
 # Load and preprocess original Excel file
 @st.cache_data
 def load_and_clean_excel(file_path):
@@ -71,21 +71,26 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# --- Download Filtered Data ---
-with st.expander("⬇️ Download Filtered Data"):
+# --- Download Full UK Wellbeing Dataset (No Preview) ---
+def convert_df_to_excel_bytes(df):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    return output.getvalue()
+
+with st.expander("⬇️ Download UK Wellbeing Dataset Used in Dashboard"):
+    # CSV Download Button
     st.download_button(
-        label="Download Filtered View as CSV",
-        data=display_df.to_csv(index=False),
-        file_name=f"{metric}_2023_2024_filtered.csv",
+        label="📄 Download as CSV",
+        data=df.to_csv(index=False),
+        file_name="UK_Wellbeing_Census_Comparison_2023_2024.csv",
         mime="text/csv"
     )
 
-# --- View and Download Full UK Wellbeing Dataset ---
-with st.expander("⬇️ View and Download Full Dataset Used in Dashboard"):
-    st.dataframe(df)
+    # Excel Download Button
     st.download_button(
-        label="Download Full UK Wellbeing Dataset as Excel",
-        data=df.to_excel(index=False, engine='openpyxl'),
+        label="📊 Download as Excel",
+        data=convert_df_to_excel_bytes(df),
         file_name="UK_Wellbeing_Census_Comparison_2023_2024.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
