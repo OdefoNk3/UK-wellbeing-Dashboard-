@@ -74,8 +74,18 @@ st.plotly_chart(fig, use_container_width=True)
 # --- Download Filtered Data ---
 with st.expander("⬇️ Download Filtered Data"):
     st.download_button(
-        label="Download as CSV",
+        label="Download Filtered View as CSV",
         data=display_df.to_csv(index=False),
         file_name=f"{metric}_2023_2024_filtered.csv",
         mime="text/csv"
+    )
+
+# --- View and Download Full UK Wellbeing Dataset ---
+with st.expander("⬇️ View and Download Full Dataset Used in Dashboard"):
+    st.dataframe(df)
+    st.download_button(
+        label="Download Full UK Wellbeing Dataset as Excel",
+        data=df.to_excel(index=False, engine='openpyxl'),
+        file_name="UK_Wellbeing_Census_Comparison_2023_2024.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
