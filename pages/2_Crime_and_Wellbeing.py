@@ -181,23 +181,23 @@ st.subheader("🗺️ Crime Map of Warwickshire by Type")
 df_map = pd.read_csv("crime_data_for_mapping.csv")
 df_map = df_map.dropna(subset=["Latitude", "Longitude"])
 
-# Get all crime types (for consistent color mapping)
+# Get all crime types
 all_crime_types = sorted(df_map["Crime type"].unique())
 
-# 🎨 Define a custom vibrant color map
-# You can extend or modify the color set below
+# 🎨 New vibrant color palette (15 high-contrast colors)
 vibrant_colors = [
-    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+    "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
+    "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
+    "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000"
 ]
 
-# Map each crime type to a fixed color
+# Create a fixed color map
 color_map = {crime: vibrant_colors[i % len(vibrant_colors)] for i, crime in enumerate(all_crime_types)}
 
 # Filter dropdown
 selected_type = st.selectbox("Filter by Crime Type:", options=["All"] + all_crime_types)
 
-# Apply filter
+# Filter data
 filtered_df = df_map if selected_type == "All" else df_map[df_map["Crime type"] == selected_type]
 
 # 📊 KPI Summary
@@ -205,7 +205,7 @@ st.markdown("### 📊 Map Summary")
 st.write(f"Total crimes shown: **{len(filtered_df):,}**")
 st.write(f"Unique crime types in view: **{filtered_df['Crime type'].nunique()}**")
 
-# Map plot
+# 📍 Map
 fig_map = px.scatter_mapbox(
     filtered_df,
     lat="Latitude",
@@ -215,7 +215,7 @@ fig_map = px.scatter_mapbox(
     zoom=9,
     height=600,
     title="Crime Locations in Warwickshire (Colored by Crime Type)",
-    color_discrete_map=color_map  # ensures consistent colors
+    color_discrete_map=color_map
 )
 
 fig_map.update_traces(marker=dict(size=6, opacity=0.65))
