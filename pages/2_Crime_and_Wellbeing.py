@@ -98,4 +98,57 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+# Divider line and section header
+st.markdown("---")
+st.subheader("Monthly Crime Trends in Warwickshire (2023 vs 2024)")
+
+import plotly.express as px
+
+# ---- Load and process trend data ----
+df_trend = pd.read_csv("crime_data_for_trends.csv")  # make sure this file is in the same folder
+
+# Ensure Month is datetime
+df_trend['Month'] = pd.to_datetime(df_trend['Month'], errors='coerce')
+
+# Extract components
+df_trend['Year'] = df_trend['Month'].dt.year
+df_trend['Month_Num'] = df_trend['Month'].dt.month
+df_trend['Month_Name'] = df_trend['Month'].dt.strftime('%B')
+
+# Group by year and month
+monthly_grouped = (
+    df_trend
+    .groupby(['Year', 'Month_Num', 'Month_Name'])
+    .size()
+    .reset_index(name='Total Crimes')
+    .sort_values(['Year', 'Month_Num'])
+)
+
+# Ensure correct month order
+month_order = ['January', 'February', 'March', 'April', 'May', 'June',
+               'July', 'August', 'September', 'October', 'November', 'December']
+monthly_grouped['Month_Name'] = pd.Categorical(monthly_grouped['Month_Name'], categories=month_order, ordered=True)
+
+# ---- Plotly Line Chart ----
+fig_monthly = px.line(
+    monthly_grouped,
+    x='Month_Name',
+    y='Total Crimes',
+    color='Year',
+    markers=True,
+    title="📅 Monthly Crime Trends in Warwickshire (2023 vs 2024)",
+    labels={"Month_Name": "Month", "Total Crimes": "Total Crimes"},
+    category_orders={"Month_Name": month_order}
+)
+
+fig_monthly.update_layout(
+    xaxis_title="Month",
+    yaxis_title="Total Crimes",
+    legend_title="Year",
+    height=500,
+    margin=dict(t=80, b=60)
+)
+
+# ---- Show in Streamlit ----
+st.plotly_chart(fig_monthly, use_container_width=True)
 
