@@ -226,4 +226,3 @@ fig_map.update_layout(
 )
 
 st.plotly_chart(fig_map, use_container_width=True)
-
