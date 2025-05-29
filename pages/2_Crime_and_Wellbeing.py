@@ -18,7 +18,7 @@ data = {
 df = pd.DataFrame(data)
 df["Year"] = df["Year"].astype(str)
 
-# ---- SELECTED METRIC ----
+# ---- WELLBEING METRIC SELECTION ----
 metric_options = [
     "Anxiety Score (West Midlands)",
     "Happiness Score (West Midlands)",
@@ -27,7 +27,27 @@ metric_options = [
 ]
 selected_metric = st.selectbox("Select a Wellbeing Metric:", metric_options)
 
-# ---- ZOOM RANGE ----
+# ---- YEAR TOGGLE (RADIO BUTTON) ----
+selected_year = st.radio("Select Year to Display:", options=["2023", "2024"], horizontal=True)
+selected_year = int(selected_year)
+selected_idx = df[df["Year"] == str(selected_year)].index[0]
+
+# ---- METRIC VALUES ----
+crime_value = df.loc[selected_idx, "Total Crimes (Warwickshire)"]
+metric_value = df.loc[selected_idx, selected_metric]
+
+# ---- % CHANGE CALCULATIONS ----
+crime_pct_change = round((df.loc[1, "Total Crimes (Warwickshire)"] - df.loc[0, "Total Crimes (Warwickshire)"]) / df.loc[0, "Total Crimes (Warwickshire)"] * 100, 2)
+metric_pct_change = round((df[selected_metric].iloc[1] - df[selected_metric].iloc[0]) / df[selected_metric].iloc[0] * 100, 2)
+
+# ---- METRIC DISPLAY ----
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(label=f"Total Crimes ({selected_year})", value=f"{int(crime_value):,}", delta=f"{crime_pct_change}%", delta_color="inverse")
+with col2:
+    st.metric(label=f"{selected_metric} ({selected_year})", value=round(metric_value, 2), delta=f"{metric_pct_change}%")
+
+# ---- CHART ZOOM RANGE ----
 min_crime = df["Total Crimes (Warwickshire)"].min()
 max_crime = df["Total Crimes (Warwickshire)"].max()
 zoom_range = [min_crime - 200, max_crime + 200]
@@ -54,10 +74,7 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.update_layout(
-    title=dict(
-        text=f"<b>Crime Volume vs {selected_metric} (2023–2024)</b>",
-        x=0.5
-    ),
+    title=dict(text=f"<b>Crime Volume vs {selected_metric} (2023–2024)</b>", x=0.5),
     xaxis=dict(title="Year", type="category"),
     yaxis=dict(title="Total Crimes (Warwickshire)", side='left', range=zoom_range),
     yaxis2=dict(title=selected_metric, overlaying='y', side='right'),
@@ -66,37 +83,7 @@ fig.update_layout(
     height=500
 )
 
-# ---- PLOTLY CHART DISPLAY WITH INTERACTION ----
-click = st.plotly_chart(fig, use_container_width=True, key="crime_chart", click_data=True)
-
-# ---- READ CLICKED YEAR ----
-clicked_year = None
-if click and click['points']:
-    clicked_year = click['points'][0]['x']
-
-# Default to 2024 if no click yet
-if not clicked_year:
-    clicked_year = "2024"
-
-# Find index for clicked year
-clicked_idx = df[df["Year"] == str(clicked_year)].index[0]
-
-# ---- METRIC DISPLAY BASED ON CLICK ----
-crime_value = df.loc[clicked_idx, "Total Crimes (Warwickshire)"]
-metric_value = df.loc[clicked_idx, selected_metric]
-
-# % change remains static (from 2023 to 2024)
-crime_pct_change = round((df.loc[1, "Total Crimes (Warwickshire)"] - df.loc[0, "Total Crimes (Warwickshire)"]) / df.loc[0, "Total Crimes (Warwickshire)"] * 100, 2)
-metric_pct_change = round((df[selected_metric].iloc[1] - df[selected_metric].iloc[0]) / df[selected_metric].iloc[0] * 100, 2)
-
-# ---- DYNAMIC KPI DISPLAY ----
-st.markdown(f"### 🔍 Selected Year: {clicked_year}")
-col1, col2 = st.columns(2)
-with col1:
-    st.metric(label=f"Total Crimes ({clicked_year})", value=f"{int(crime_value):,}", delta=f"{crime_pct_change}%", delta_color="inverse")
-with col2:
-    st.metric(label=f"{selected_metric} ({clicked_year})", value=round(metric_value, 2), delta=f"{metric_pct_change}%")
-
+st.plotly_chart(fig, use_container_width=True)
 
 import plotly.express as px
 
