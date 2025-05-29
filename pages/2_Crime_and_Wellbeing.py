@@ -177,30 +177,37 @@ import streamlit as st
 st.markdown("---")
 st.subheader("🗺️ Crime Map of Warwickshire by Type")
 
-# Load data
-df_map = pd.read_csv("crime_data_for_mapping.csv")  # Ensure this is in the same directory or repo
-
-# Drop missing coordinates
+# Load the data
+df_map = pd.read_csv("crime_data_for_mapping.csv")
 df_map = df_map.dropna(subset=["Latitude", "Longitude"])
 
-# 🎯 FILTER 1: Dropdown for Crime Type
-crime_types = sorted(df_map["Crime type"].unique())
-selected_type = st.selectbox("Filter by Crime Type:", options=["All"] + crime_types)
+# Get all crime types (for consistent color mapping)
+all_crime_types = sorted(df_map["Crime type"].unique())
 
-if selected_type != "All":
-    df_map = df_map[df_map["Crime type"] == selected_type]
+# 🎨 Define a custom vibrant color map
+# You can extend or modify the color set below
+vibrant_colors = [
+    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+]
+
+# Map each crime type to a fixed color
+color_map = {crime: vibrant_colors[i % len(vibrant_colors)] for i, crime in enumerate(all_crime_types)}
+
+# Filter dropdown
+selected_type = st.selectbox("Filter by Crime Type:", options=["All"] + all_crime_types)
+
+# Apply filter
+filtered_df = df_map if selected_type == "All" else df_map[df_map["Crime type"] == selected_type]
 
 # 📊 KPI Summary
 st.markdown("### 📊 Map Summary")
-st.write(f"Total crimes shown: **{len(df_map):,}**")
-st.write(f"Unique crime types in view: **{df_map['Crime type'].nunique()}**")
+st.write(f"Total crimes shown: **{len(filtered_df):,}**")
+st.write(f"Unique crime types in view: **{filtered_df['Crime type'].nunique()}**")
 
-# 🎨 Custom color palette (qualitative for better contrast)
-color_palette = px.colors.qualitative.Set1
-
-# 📍 Create the Map
+# Map plot
 fig_map = px.scatter_mapbox(
-    df_map,
+    filtered_df,
     lat="Latitude",
     lon="Longitude",
     color="Crime type",
@@ -208,18 +215,15 @@ fig_map = px.scatter_mapbox(
     zoom=9,
     height=600,
     title="Crime Locations in Warwickshire (Colored by Crime Type)",
-    color_discrete_sequence=color_palette
+    color_discrete_map=color_map  # ensures consistent colors
 )
 
-# ✏️ Improve style: dot size, opacity
-fig_map.update_traces(marker=dict(size=6, opacity=0.6))
-
-# 🗺️ Final layout polish
+fig_map.update_traces(marker=dict(size=6, opacity=0.65))
 fig_map.update_layout(
     mapbox_style="open-street-map",
     margin={"r": 0, "t": 50, "l": 0, "b": 0},
     legend_title_text="Crime Type"
 )
 
-# Show map in Streamlit
 st.plotly_chart(fig_map, use_container_width=True)
+
