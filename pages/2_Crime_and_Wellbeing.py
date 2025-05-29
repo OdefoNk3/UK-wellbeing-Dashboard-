@@ -16,9 +16,9 @@ data = {
     "Worthwhile Score (West Midlands)": [7.8, 7.8]
 }
 df = pd.DataFrame(data)
-df["Year"] = df["Year"].astype(str)  # convert to string for proper x-axis
+df["Year"] = df["Year"].astype(str)  # Ensure Year is string for categorical axis
 
-# ---- DROPDOWN ----
+# ---- WELLBEING METRIC SELECTION ----
 metric_options = [
     "Anxiety Score (West Midlands)",
     "Happiness Score (West Midlands)",
@@ -27,18 +27,28 @@ metric_options = [
 ]
 selected_metric = st.selectbox("Select a Wellbeing Metric:", metric_options)
 
-# ---- % CHANGE CALC ----
-crime_change = round((df.iloc[1, 1] - df.iloc[0, 1]) / df.iloc[0, 1] * 100, 2)
-metric_change = round((df[selected_metric].iloc[1] - df[selected_metric].iloc[0]) / df[selected_metric].iloc[0] * 100, 2)
+# ---- YEAR SELECTION FOR KPI DISPLAY ----
+selected_year = st.radio("Select Year to Display KPIs:", options=["2023", "2024"], horizontal=True)
+selected_year = int(selected_year)
+selected_idx = df[df["Year"] == str(selected_year)].index[0]
 
-# ---- METRICS DISPLAY (TOP) ----
+# ---- KPI METRICS DISPLAY (DYNAMIC) ----
+# % Change (from 2023 to 2024)
+crime_pct_change = round((df.loc[1, "Total Crimes (Warwickshire)"] - df.loc[0, "Total Crimes (Warwickshire)"]) / df.loc[0, "Total Crimes (Warwickshire)"] * 100, 2)
+metric_pct_change = round((df[selected_metric].iloc[1] - df[selected_metric].iloc[0]) / df[selected_metric].iloc[0] * 100, 2)
+
+# Current values for the selected year
+crime_value = df.loc[selected_idx, "Total Crimes (Warwickshire)"]
+metric_value = df.loc[selected_idx, selected_metric]
+
+# ---- KPI DISPLAY ----
 col1, col2 = st.columns(2)
 with col1:
-    st.metric(label="Total Crimes (2024)", value=f"{df.iloc[1, 1]:,}", delta=f"{crime_change}%", delta_color="inverse")
+    st.metric(label=f"Total Crimes ({selected_year})", value=f"{int(crime_value):,}", delta=f"{crime_pct_change}%", delta_color="inverse")
 with col2:
-    st.metric(label=f"{selected_metric} (2024)", value=round(df[selected_metric].iloc[1], 2), delta=f"{metric_change}%")
+    st.metric(label=f"{selected_metric} ({selected_year})", value=round(metric_value, 2), delta=f"{metric_pct_change}%")
 
-# ---- ZOOMING FOR BAR ----
+# ---- CHART ZOOM RANGE ----
 min_crime = df["Total Crimes (Warwickshire)"].min()
 max_crime = df["Total Crimes (Warwickshire)"].max()
 zoom_range = [min_crime - 200, max_crime + 200]
@@ -72,7 +82,7 @@ fig.update_layout(
     ),
     xaxis=dict(
         title="Year",
-        type="category",  # ensures clean 2023/2024 labels
+        type="category"
     ),
     yaxis=dict(
         title="Total Crimes (Warwickshire)",
@@ -97,6 +107,7 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
 
 # Divider line and section header
 st.markdown("---")
