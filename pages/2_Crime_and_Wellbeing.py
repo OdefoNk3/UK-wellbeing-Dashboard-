@@ -16,6 +16,9 @@ data = {
 }
 df = pd.DataFrame(data)
 
+# Convert Year to string to fix x-axis
+df["Year"] = df["Year"].astype(str)
+
 # ---- DROPDOWN SELECTION ----
 metric_options = [
     "Anxiety Score (West Midlands)",
@@ -29,19 +32,12 @@ selected_metric = st.selectbox("Select Wellbeing Metric:", metric_options)
 crime_pct_change = round(((df.loc[1, "Total Crimes (Warwickshire)"] - df.loc[0, "Total Crimes (Warwickshire)"]) / df.loc[0, "Total Crimes (Warwickshire)"]) * 100, 2)
 metric_pct_change = round(((df.loc[1, selected_metric] - df.loc[0, selected_metric]) / df.loc[0, selected_metric]) * 100, 2)
 
-# ---- METRIC DISPLAY ----
-col1, col2 = st.columns(2)
-with col1:
-    st.metric(label="Crime Change (Warwickshire)", value=f"{df.loc[1, 'Total Crimes (Warwickshire)']:,}", delta=f"{crime_pct_change}%")
-with col2:
-    st.metric(label=f"{selected_metric} Change", value=round(df.loc[1, selected_metric], 2), delta=f"{metric_pct_change}%")
-
 # ---- COMBINED CHART ----
 fig = go.Figure()
 
-# Bar chart for crime
+# Bar chart for Total Crimes
 fig.add_trace(go.Bar(
-    x=df["Year"].astype(str),
+    x=df["Year"],
     y=df["Total Crimes (Warwickshire)"],
     name="Total Crimes",
     marker_color="skyblue",
@@ -50,7 +46,7 @@ fig.add_trace(go.Bar(
 
 # Line chart for selected wellbeing metric
 fig.add_trace(go.Scatter(
-    x=df["Year"].astype(str),
+    x=df["Year"],
     y=df[selected_metric],
     name=selected_metric,
     marker=dict(color="darkorange", size=10),
@@ -59,17 +55,30 @@ fig.add_trace(go.Scatter(
     yaxis='y2'
 ))
 
-# Layout configuration
+# Zoom in on Total Crimes y-axis
+min_crime = df["Total Crimes (Warwickshire)"].min()
+max_crime = df["Total Crimes (Warwickshire)"].max()
+crime_padding = 500
+
+# Layout update
 fig.update_layout(
-    title=f"Crime Volume vs {selected_metric} (2023–2024)",
+    title=f"<b>Crime Volume vs {selected_metric} (2023–2024)</b>",
     xaxis=dict(title="Year"),
-    yaxis=dict(title="Total Crimes (Warwickshire)", side='left'),
+    yaxis=dict(title="Total Crimes (Warwickshire)", side='left', range=[min_crime - crime_padding, max_crime + crime_padding]),
     yaxis2=dict(title=selected_metric, overlaying='y', side='right'),
     legend=dict(x=0.01, y=1.15, orientation="h"),
     height=500,
-    margin=dict(t=80, b=50)
+    margin=dict(t=80, b=50),
 )
 
 # Show chart
 st.plotly_chart(fig, use_container_width=True)
+
+# ---- METRIC DISPLAY BELOW CHART ----
+st.markdown("### Year-on-Year % Change")
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(label="Crime (Warwickshire)", value=f"{df.loc[1, 'Total Crimes (Warwickshire)']:,}", delta=f"{crime_pct_change}%")
+with col2:
+    st.metric(label=selected_metric, value=round(df.loc[1, selected_metric], 2), delta=f"{metric_pct_change}%")
 
