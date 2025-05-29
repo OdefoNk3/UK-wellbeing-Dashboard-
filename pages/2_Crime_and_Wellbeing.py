@@ -169,3 +169,39 @@ st.write(
     f"In **2023**, the highest monthly crime total was **{peak_2023:,}**. "
     f"In **2024**, it was **{peak_2024:,}**. This provides a quick view of peak activity across years."
 )
+
+import plotly.express as px
+import streamlit as st
+import pandas as pd
+
+st.markdown("---")
+st.subheader("🗺️ Crime Map of Warwickshire by Type")
+
+# Load the crime mapping data
+df_map = pd.read_csv("crime_data_for_mapping.csv")  # make sure it's in the same folder
+
+# Filter out rows with missing coordinates
+df_map = df_map.dropna(subset=["Latitude", "Longitude"])
+
+# Optional: Focus on Warwickshire if needed (some rows are from Birmingham or other areas)
+# df_map = df_map[df_map["LSOA name"].str.contains("Warwickshire", na=False)]
+
+# Plotly scatter mapbox
+fig_map = px.scatter_mapbox(
+    df_map,
+    lat="Latitude",
+    lon="Longitude",
+    color="Crime type",
+    hover_data=["Location", "Crime type", "Month"],
+    zoom=9,
+    height=600,
+    title="Crime Locations in Warwickshire (Colored by Crime Type)",
+)
+
+fig_map.update_layout(
+    mapbox_style="open-street-map",
+    margin={"r":0,"t":50,"l":0,"b":0},
+    legend_title_text="Crime Type"
+)
+
+st.plotly_chart(fig_map, use_container_width=True)
