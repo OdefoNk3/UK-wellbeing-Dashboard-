@@ -104,8 +104,11 @@ st.subheader("Monthly Crime Trends in Warwickshire (2023 vs 2024)")
 
 import plotly.express as px
 
+st.markdown("---")
+st.subheader("📅 Monthly Crime Trends in Warwickshire (2023 vs 2024)")
+
 # ---- Load and process trend data ----
-df_trend = pd.read_csv("crime_data_for_trends.csv")  # make sure this file is in the same folder
+df_trend = pd.read_csv("crime_data_for_trends.csv")  # make sure it's in the same directory
 
 # Ensure Month is datetime
 df_trend['Month'] = pd.to_datetime(df_trend['Month'], errors='coerce')
@@ -136,11 +139,17 @@ fig_monthly = px.line(
     y='Total Crimes',
     color='Year',
     markers=True,
+    hover_data=["Total Crimes", "Year"],
     title="📅 Monthly Crime Trends in Warwickshire (2023 vs 2024)",
     labels={"Month_Name": "Month", "Total Crimes": "Total Crimes"},
-    category_orders={"Month_Name": month_order}
+    category_orders={"Month_Name": month_order},
+    color_discrete_map={2023: "royalblue", 2024: "darkorange"}
 )
 
+# Improve line style
+fig_monthly.update_traces(line=dict(width=3))
+
+# Layout tweaks
 fig_monthly.update_layout(
     xaxis_title="Month",
     yaxis_title="Total Crimes",
@@ -149,6 +158,14 @@ fig_monthly.update_layout(
     margin=dict(t=80, b=60)
 )
 
-# ---- Show in Streamlit ----
+# ---- Display in Streamlit ----
 st.plotly_chart(fig_monthly, use_container_width=True)
 
+# ---- Insight Summary ----
+st.markdown("### 🔍 Insight Summary")
+peak_2023 = monthly_grouped[monthly_grouped["Year"] == 2023]["Total Crimes"].max()
+peak_2024 = monthly_grouped[monthly_grouped["Year"] == 2024]["Total Crimes"].max()
+st.write(
+    f"In **2023**, the highest monthly crime total was **{peak_2023:,}**. "
+    f"In **2024**, it was **{peak_2024:,}**. This provides a quick view of peak activity across years."
+)
