@@ -171,37 +171,55 @@ st.write(
 )
 
 import plotly.express as px
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 st.markdown("---")
 st.subheader("🗺️ Crime Map of Warwickshire by Type")
 
-# Load the crime mapping data
-df_map = pd.read_csv("crime_data_for_mapping.csv")  # make sure it's in the same folder
+# Load data
+df_map = pd.read_csv("crime_data_for_mapping.csv")  # Ensure this is in the same directory or repo
 
-# Filter out rows with missing coordinates
+# Drop missing coordinates
 df_map = df_map.dropna(subset=["Latitude", "Longitude"])
 
-# Optional: Focus on Warwickshire if needed (some rows are from Birmingham or other areas)
-# df_map = df_map[df_map["LSOA name"].str.contains("Warwickshire", na=False)]
+# 🎯 FILTER 1: Dropdown for Crime Type
+crime_types = sorted(df_map["Crime type"].unique())
+selected_type = st.selectbox("Filter by Crime Type:", options=["All"] + crime_types)
 
-# Plotly scatter mapbox
+if selected_type != "All":
+    df_map = df_map[df_map["Crime type"] == selected_type]
+
+# 📊 KPI Summary
+st.markdown("### 📊 Map Summary")
+st.write(f"Total crimes shown: **{len(df_map):,}**")
+st.write(f"Unique crime types in view: **{df_map['Crime type'].nunique()}**")
+
+# 🎨 Custom color palette (qualitative for better contrast)
+color_palette = px.colors.qualitative.Set1
+
+# 📍 Create the Map
 fig_map = px.scatter_mapbox(
     df_map,
     lat="Latitude",
     lon="Longitude",
     color="Crime type",
-    hover_data=["Location", "Crime type", "Month"],
+    hover_data=["Location", "Crime type", "Month", "Last outcome category"],
     zoom=9,
     height=600,
     title="Crime Locations in Warwickshire (Colored by Crime Type)",
+    color_discrete_sequence=color_palette
 )
 
+# ✏️ Improve style: dot size, opacity
+fig_map.update_traces(marker=dict(size=6, opacity=0.6))
+
+# 🗺️ Final layout polish
 fig_map.update_layout(
     mapbox_style="open-street-map",
-    margin={"r":0,"t":50,"l":0,"b":0},
+    margin={"r": 0, "t": 50, "l": 0, "b": 0},
     legend_title_text="Crime Type"
 )
 
+# Show map in Streamlit
 st.plotly_chart(fig_map, use_container_width=True)
