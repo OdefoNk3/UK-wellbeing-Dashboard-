@@ -215,57 +215,48 @@ import plotly.express as px
 import streamlit as st
 
 st.markdown("---")
-st.subheader("📉 Most Common Crime Types in Warwickshire (2023 vs 2024)")
+st.subheader("📊 Types of Crime Committed in Warwickshire (Change from 2023 to 2024)")
 
-# Load the data
-df_trend = pd.read_csv("crime_data_for_trends.csv")
+# Load data
+df = pd.read_csv("crime_data_for_trends.csv")
 
-# Drop rows without crime type
-df_trend = df_trend.dropna(subset=["Crime type"])
+# Clean & Extract year
+df['Year'] = pd.to_datetime(df['Month'], errors='coerce').dt.year
+df = df[df['Year'].isin([2023, 2024])]
 
-# Extract year from date
-df_trend['Year'] = pd.to_datetime(df_trend['Month'], errors='coerce').dt.year
+# Remove rows without crime type
+df = df.dropna(subset=['Crime type'])
 
-# Filter for valid years
-df_trend = df_trend[df_trend["Year"].isin([2023, 2024])]
+# Count total crimes by type and year
+crime_counts = df.groupby(['Crime type', 'Year']).size().unstack(fill_value=0).reset_index()
+crime_counts.columns = ['Crime type', '2023', '2024']
 
-# Group by crime type and year
-crime_counts = (
-    df_trend.groupby(["Crime type", "Year"])
-    .size()
-    .reset_index(name="Total Crimes")
-)
+# Calculate % change
+crime_counts['% Change'] = round(((crime_counts[2024] - crime_counts[2023]) / crime_counts[2023]) * 100, 2)
 
-# Sort by most common in 2024 or total sum
-top_crimes = (
-    crime_counts.groupby("Crime type")["Total Crimes"]
-    .sum()
-    .sort_values(ascending=False)
-    .head(10)
-    .index
-)
+# Sort by absolute change for better visibility
+crime_counts = crime_counts.sort_values(by='% Change', ascending=False)
 
-crime_counts = crime_counts[crime_counts["Crime type"].isin(top_crimes)]
-
-# Plot horizontal grouped bar chart
-fig_crimes = px.bar(
+# Create a horizontal bar chart
+fig = px.bar(
     crime_counts,
-    x="Total Crimes",
-    y="Crime type",
-    color="Year",
-    orientation="h",
-    barmode="group",
-    title="Top 10 Crime Types in Warwickshire (2023 vs 2024)",
-    color_discrete_sequence=["#1f77b4", "#ff7f0e"]
+    x='% Change',
+    y='Crime type',
+    color='% Change',
+    color_continuous_scale=['red', 'lightgrey', 'green'],
+    color_continuous_midpoint=0,
+    orientation='h',
+    title="Percentage Change in Crime Types (2023 → 2024)"
 )
 
-fig_crimes.update_layout(
-    height=500,
+fig.update_layout(
+    xaxis_title="Percentage Change",
     yaxis_title="Crime Type",
-    xaxis_title="Total Crimes",
-    margin=dict(t=80, b=50),
-    legend_title_text="Year"
+    height=700,
+    margin=dict(t=80, b=60),
+    coloraxis_showscale=False  # remove color bar
 )
 
-# Display in Streamlit
-st.plotly_chart(fig_crimes, use_container_width=True)
+# Display the chart
+st.plotly_chart(fig, use_container_width=True)
+
