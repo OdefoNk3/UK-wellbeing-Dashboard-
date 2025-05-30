@@ -209,3 +209,63 @@ fig_map.update_layout(
 )
 
 st.plotly_chart(fig_map, use_container_width=True)
+
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+
+st.markdown("---")
+st.subheader("📉 Most Common Crime Types in Warwickshire (2023 vs 2024)")
+
+# Load the data
+df_trend = pd.read_csv("crime_data_for_trends.csv")
+
+# Drop rows without crime type
+df_trend = df_trend.dropna(subset=["Crime type"])
+
+# Extract year from date
+df_trend['Year'] = pd.to_datetime(df_trend['Month'], errors='coerce').dt.year
+
+# Filter for valid years
+df_trend = df_trend[df_trend["Year"].isin([2023, 2024])]
+
+# Group by crime type and year
+crime_counts = (
+    df_trend.groupby(["Crime type", "Year"])
+    .size()
+    .reset_index(name="Total Crimes")
+)
+
+# Sort by most common in 2024 or total sum
+top_crimes = (
+    crime_counts.groupby("Crime type")["Total Crimes"]
+    .sum()
+    .sort_values(ascending=False)
+    .head(10)
+    .index
+)
+
+crime_counts = crime_counts[crime_counts["Crime type"].isin(top_crimes)]
+
+# Plot horizontal grouped bar chart
+fig_crimes = px.bar(
+    crime_counts,
+    x="Total Crimes",
+    y="Crime type",
+    color="Year",
+    orientation="h",
+    barmode="group",
+    title="Top 10 Crime Types in Warwickshire (2023 vs 2024)",
+    color_discrete_sequence=["#1f77b4", "#ff7f0e"]
+)
+
+fig_crimes.update_layout(
+    height=500,
+    yaxis_title="Crime Type",
+    xaxis_title="Total Crimes",
+    margin=dict(t=80, b=50),
+    legend_title_text="Year"
+)
+
+# Display in Streamlit
+st.plotly_chart(fig_crimes, use_container_width=True)
