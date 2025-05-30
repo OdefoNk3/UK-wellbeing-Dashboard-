@@ -310,7 +310,7 @@ else:
         barmode="group",
         title="Grouped Bar Chart: Crime Totals by Type (2023 vs 2024)",
         hover_data={"% Change": True, "Total Crimes": True, "Year": True},
-        color_discrete_map={"2023": "#1f77b4", "2024": "#ff7f0e"}
+        color_discrete_map={"2023": "#FF69B4", "2024": "#00CED1"}
     )
 
     fig.update_layout(
