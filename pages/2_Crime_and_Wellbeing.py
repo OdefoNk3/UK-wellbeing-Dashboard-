@@ -217,27 +217,30 @@ import streamlit as st
 st.markdown("---")
 st.subheader("📊 Types of Crime Committed in Warwickshire (Change from 2023 to 2024)")
 
-# Load data
+# Load and prepare data
 df = pd.read_csv("crime_data_for_trends.csv")
 
-# Clean & Extract year
+# Extract and filter years
 df['Year'] = pd.to_datetime(df['Month'], errors='coerce').dt.year
 df = df[df['Year'].isin([2023, 2024])]
 
-# Remove rows without crime type
+# Drop rows with missing crime type
 df = df.dropna(subset=['Crime type'])
 
-# Count total crimes by type and year
+# Group by crime type and year
 crime_counts = df.groupby(['Crime type', 'Year']).size().unstack(fill_value=0).reset_index()
-crime_counts.columns = ['Crime type', '2023', '2024']
+
+# Fix KeyError by safely adding missing year columns
+crime_counts['2023'] = crime_counts.get(2023, 0)
+crime_counts['2024'] = crime_counts.get(2024, 0)
 
 # Calculate % change
-crime_counts['% Change'] = round(((crime_counts[2024] - crime_counts[2023]) / crime_counts[2023]) * 100, 2)
+crime_counts['% Change'] = round(((crime_counts['2024'] - crime_counts['2023']) / crime_counts['2023']) * 100, 2)
 
-# Sort by absolute change for better visibility
+# Sort for clarity
 crime_counts = crime_counts.sort_values(by='% Change', ascending=False)
 
-# Create a horizontal bar chart
+# Create horizontal bar chart
 fig = px.bar(
     crime_counts,
     x='% Change',
@@ -254,9 +257,9 @@ fig.update_layout(
     yaxis_title="Crime Type",
     height=700,
     margin=dict(t=80, b=60),
-    coloraxis_showscale=False  # remove color bar
+    coloraxis_showscale=False  # Hide color bar
 )
 
-# Display the chart
+# Show chart
 st.plotly_chart(fig, use_container_width=True)
 
