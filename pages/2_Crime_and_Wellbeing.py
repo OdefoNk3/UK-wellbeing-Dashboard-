@@ -225,21 +225,24 @@ df['Year'] = pd.to_datetime(df['Month'], errors='coerce').dt.year
 df = df[df['Year'].isin([2023, 2024])]
 df = df.dropna(subset=['Crime type'])
 
+# Convert Year to string for proper discrete legend
+df['Year'] = df['Year'].astype(str)
+
 # Count crimes per type and year
 crime_counts = df.groupby(['Crime type', 'Year']).size().reset_index(name='Total Crimes')
 
 # Pivot to calculate % change
 pivot_df = crime_counts.pivot(index='Crime type', columns='Year', values='Total Crimes').fillna(0).reset_index()
-pivot_df['% Change'] = round(((pivot_df[2024] - pivot_df[2023]) / pivot_df[2023]) * 100, 2)
+pivot_df['% Change'] = round(((pivot_df["2024"] - pivot_df["2023"]) / pivot_df["2023"]) * 100, 2)
 
-# Merge % change back into long format
+# Merge % change into long format
 crime_counts = crime_counts.merge(pivot_df[['Crime type', '% Change']], on='Crime type')
 
-# Sort by total crimes in 2024 (or 2023) for visual order
-sort_order = crime_counts[crime_counts["Year"] == 2024].sort_values("Total Crimes", ascending=False)["Crime type"]
+# Sort bars based on 2024 volume
+sort_order = crime_counts[crime_counts["Year"] == "2024"].sort_values("Total Crimes", ascending=False)["Crime type"]
 crime_counts["Crime type"] = pd.Categorical(crime_counts["Crime type"], categories=sort_order, ordered=True)
 
-# Plot horizontal grouped bar chart
+# Create the grouped horizontal bar chart
 fig = px.bar(
     crime_counts,
     x="Total Crimes",
@@ -249,7 +252,7 @@ fig = px.bar(
     barmode="group",
     title="Crime Types in Warwickshire (2023 vs 2024)",
     hover_data={"% Change": True, "Total Crimes": True, "Year": True},
-    color_discrete_map={2023: "#1f77b4", 2024: "#ff7f0e"}
+    color_discrete_map={"2023": "#1f77b4", "2024": "#ff7f0e"}  # blue & orange
 )
 
 fig.update_layout(
@@ -257,9 +260,9 @@ fig.update_layout(
     yaxis_title="Crime Type",
     height=700,
     margin=dict(t=80, b=60),
-    legend_title_text="Year"
+    legend_title_text="Year",  # ← This now shows blue = 2023, orange = 2024
+    coloraxis_showscale=False  # ← This prevents showing the gradient colorbar
 )
 
-# Display chart
+# Show in Streamlit
 st.plotly_chart(fig, use_container_width=True)
-
