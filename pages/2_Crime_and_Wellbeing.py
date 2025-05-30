@@ -211,11 +211,12 @@ fig_map.update_layout(
 st.plotly_chart(fig_map, use_container_width=True)
 
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
 st.markdown("---")
-st.subheader("📍 Crime Types in Warwickshire: 2023 vs 2024 (Dot Plot View)")
+st.subheader("📊 Types of Crime Committed in Warwickshire (2023 vs 2024)")
 
 # Load and prepare data
 df = pd.read_csv("crime_data_for_trends.csv")
@@ -225,63 +226,84 @@ df = df[df["Year"].isin([2023, 2024])].dropna(subset=["Crime type"])
 # Count crimes per type and year
 crime_counts = df.groupby(["Crime type", "Year"]).size().unstack(fill_value=0).reset_index()
 crime_counts["% Change"] = round(((crime_counts[2024] - crime_counts[2023]) / crime_counts[2023]) * 100, 2)
+crime_counts = crime_counts.sort_values(by=2024, ascending=False)
 
-# Optional sort toggle
-sort_by = st.radio("Sort crime types by:", ["2024 Volume", "% Change"])
-if sort_by == "2024 Volume":
-    crime_counts = crime_counts.sort_values(by=2024, ascending=False)
-else:
-    crime_counts = crime_counts.sort_values(by="% Change", ascending=False)
+# Toggle between Dot Plot and Grouped Bar Chart
+chart_type = st.radio("Select chart type:", ["Dot Plot", "Grouped Bar Chart"])
 
-# Dot plot with connecting lines
-fig = go.Figure()
+if chart_type == "Dot Plot":
+    fig = go.Figure()
+    for _, row in crime_counts.iterrows():
+        fig.add_trace(go.Scatter(
+            x=[row[2023], row[2024]],
+            y=[row["Crime type"]] * 2,
+            mode='lines',
+            line=dict(color='gray', width=1, dash='dot'),
+            showlegend=False
+        ))
 
-for _, row in crime_counts.iterrows():
     fig.add_trace(go.Scatter(
-        x=[row[2023], row[2024]],
-        y=[row["Crime type"]] * 2,
-        mode='lines',
-        line=dict(color='gray', width=1, dash='dot'),
-        showlegend=False
+        x=crime_counts[2023],
+        y=crime_counts["Crime type"],
+        mode='markers',
+        name='2023',
+        marker=dict(color='#1f77b4', size=9),
+        customdata=crime_counts["% Change"],
+        hovertemplate='2023<br>%{y}: %{x}<br>Change to 2024: %{customdata:.2f}%<extra></extra>'
     ))
 
-# 2023 dots
-fig.add_trace(go.Scatter(
-    x=crime_counts[2023],
-    y=crime_counts["Crime type"],
-    mode='markers',
-    name='2023',
-    marker=dict(color='#1f77b4', size=9),
-    customdata=crime_counts["% Change"],
-    hovertemplate='2023<br>%{y}: %{x}<br>Change: %{customdata:.2f}%<extra></extra>'
-))
+    fig.add_trace(go.Scatter(
+        x=crime_counts[2024],
+        y=crime_counts["Crime type"],
+        mode='markers',
+        name='2024',
+        marker=dict(color='#ff7f0e', size=11, line=dict(width=2, color='black')),
+        customdata=crime_counts["% Change"],
+        hovertemplate='2024<br>%{y}: %{x}<br>Change from 2023: %{customdata:.2f}%<extra></extra>'
+    ))
 
-# 2024 dots
-fig.add_trace(go.Scatter(
-    x=crime_counts[2024],
-    y=crime_counts["Crime type"],
-    mode='markers',
-    name='2024',
-    marker=dict(color='#ff7f0e', size=11, line=dict(width=2, color='black')),
-    customdata=crime_counts["% Change"],
-    hovertemplate='2024<br>%{y}: %{x}<br>Change: %{customdata:.2f}%<extra></extra>'
-))
+    fig.update_layout(
+        title="Dot Plot: Crime Totals per Type in 2023 vs 2024",
+        xaxis_title="Total Crimes",
+        yaxis_title="Crime Type",
+        height=750,
+        margin=dict(t=80, b=60),
+        legend_title_text="Year",
+        yaxis=dict(automargin=True, categoryorder="total ascending"),
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
 
-# Layout polish
-fig.update_layout(
-    title="Dot Plot: Crime Totals per Type in 2023 vs 2024",
-    xaxis_title="Total Crimes",
-    yaxis_title="Crime Type",
-    height=750,
-    margin=dict(t=80, b=60),
-    legend_title_text="Year",
-    yaxis=dict(automargin=True, categoryorder="total ascending"),
-    plot_bgcolor='rgba(0,0,0,0)'
-)
+else:
+    crime_long = crime_counts.melt(
+        id_vars=["Crime type", "% Change"],
+        value_vars=[2023, 2024],
+        var_name="Year",
+        value_name="Total Crimes"
+    )
+    crime_long["Year"] = crime_long["Year"].astype(str)
 
-# Display chart and insights side-by-side
+    fig = px.bar(
+        crime_long,
+        x="Total Crimes",
+        y="Crime type",
+        color="Year",
+        orientation="h",
+        barmode="group",
+        title="Grouped Bar Chart: Crime Totals by Type (2023 vs 2024)",
+        hover_data={"% Change": True, "Total Crimes": True, "Year": True},
+        color_discrete_map={"2023": "#1f77b4", "2024": "#ff7f0e"}
+    )
+
+    fig.update_layout(
+        xaxis_title="Total Crimes",
+        yaxis_title="Crime Type",
+        height=750,
+        margin=dict(t=80, b=60),
+        legend_title_text="Year"
+    )
+
+# Show chart and insights
 col1, col2 = st.columns([3, 1])
-
 with col1:
     st.plotly_chart(fig, use_container_width=True)
 
@@ -290,6 +312,16 @@ with col2:
     most_decreased = crime_counts.loc[crime_counts["% Change"].idxmin()]
 
     st.markdown("### 🔍 Key Insights")
-    st.markdown(f"🟢 **Highest Increase**: `{most_increased['Crime type']}` (+{most_increased['% Change']}%)")
-    st.markdown(f"🔴 **Biggest Drop**: `{most_decreased['Crime type']}` ({most_decreased['% Change']}%)")
+    st.markdown(
+        f"<span style='color:green'>🟢 <strong>Highest Increase</strong></span>: "
+        f"`{most_increased['Crime type']}` increased by <span style='color:green'>"
+        f"{most_increased['% Change']}%</span> from 2023 to 2024.",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f"<span style='color:red'>🔴 <strong>Biggest Drop</strong></span>: "
+        f"`{most_decreased['Crime type']}` decreased by <span style='color:red'>"
+        f"{most_decreased['% Change']}%</span> from 2023 to 2024.",
+        unsafe_allow_html=True
+    )
 
