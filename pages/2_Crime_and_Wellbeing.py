@@ -59,14 +59,24 @@ line_color = "#00CED1"  # turquoise
 # ---- PLOTLY CHART ----
 fig = go.Figure()
 
-# Total Crimes Bars
+# Bar for 2023 (Pink)
 fig.add_trace(go.Bar(
-    x=df["Year"],
-    y=df["Total Crimes (Warwickshire)"],
-    name="Total Crimes",
-    marker_color=bar_colors,
+    x=["2023"],
+    y=[df.loc[df["Year"] == "2023", "Total Crimes (Warwickshire)"].values[0]],
+    name="2023 Total Crimes",
+    marker_color="#FF69B4",
     yaxis='y1'
 ))
+
+# Bar for 2024 (Purple)
+fig.add_trace(go.Bar(
+    x=["2024"],
+    y=[df.loc[df["Year"] == "2024", "Total Crimes (Warwickshire)"].values[0]],
+    name="2024 Total Crimes",
+    marker_color="#A569BD",
+    yaxis='y1'
+))
+
 
 # Wellbeing Metric Line
 fig.add_trace(go.Scatter(
