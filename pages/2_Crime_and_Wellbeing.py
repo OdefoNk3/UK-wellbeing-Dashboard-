@@ -18,7 +18,7 @@ data = {
 df = pd.DataFrame(data)
 df["Year"] = df["Year"].astype(str)
 
-# ---- METRIC SELECTION ----
+# ---- WELLBEING METRIC SELECTION ----
 metric_options = [
     "Anxiety Score (West Midlands)",
     "Happiness Score (West Midlands)",
@@ -32,7 +32,7 @@ selected_year = st.radio("Select Year to Display:", options=["2023", "2024"], ho
 selected_year = int(selected_year)
 selected_idx = df[df["Year"] == str(selected_year)].index[0]
 
-# ---- VALUES ----
+# ---- METRIC VALUES ----
 crime_value = df.loc[selected_idx, "Total Crimes (Warwickshire)"]
 metric_value = df.loc[selected_idx, selected_metric]
 
@@ -52,12 +52,14 @@ min_crime = df["Total Crimes (Warwickshire)"].min()
 max_crime = df["Total Crimes (Warwickshire)"].max()
 zoom_range = [min_crime - 200, max_crime + 200]
 
+# ---- COLOR SETTINGS ----
+bar_colors = ["#00BFFF", "#A569BD"]  # 2023: deep sky blue, 2024: purple
+line_color = "#00CED1"  # turquoise
+
 # ---- PLOTLY CHART ----
 fig = go.Figure()
 
-# Custom bar colors: 2023 = blue, 2024 = purple
-bar_colors = ["#1f77b4", "#9467bd"]
-
+# Total Crimes Bars
 fig.add_trace(go.Bar(
     x=df["Year"],
     y=df["Total Crimes (Warwickshire)"],
@@ -66,17 +68,18 @@ fig.add_trace(go.Bar(
     yaxis='y1'
 ))
 
-# Custom line color: turquoise
+# Wellbeing Metric Line
 fig.add_trace(go.Scatter(
     x=df["Year"],
     y=df[selected_metric],
     name=selected_metric,
     mode='lines+markers',
-    marker=dict(color="#00ced1", size=10),
-    line=dict(color="#00ced1", width=3),
+    marker=dict(color=line_color, size=10),
+    line=dict(color=line_color, width=3),
     yaxis='y2'
 ))
 
+# Layout
 fig.update_layout(
     title=dict(text=f"<b>Crime Volume vs {selected_metric} (2023–2024)</b>", x=0.5, font=dict(size=18)),
     xaxis=dict(title="Year", type="category"),
@@ -87,7 +90,9 @@ fig.update_layout(
     height=500
 )
 
+# Display chart
 st.plotly_chart(fig, use_container_width=True)
+
 
 import plotly.express as px
 
