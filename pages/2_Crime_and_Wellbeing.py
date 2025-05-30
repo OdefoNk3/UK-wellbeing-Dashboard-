@@ -53,7 +53,7 @@ max_crime = df["Total Crimes (Warwickshire)"].max()
 zoom_range = [min_crime - 200, max_crime + 200]
 
 # ---- COLOR SETTINGS ----
-bar_colors = ["#00BFFF", "#A569BD"]  # 2023: deep sky blue, 2024: purple
+bar_colors = ["#FF69B4", "#A569BD"]  # 2023: hot pink, 2024: purple
 line_color = "#00CED1"  # turquoise
 
 # ---- PLOTLY CHART ----
