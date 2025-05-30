@@ -18,7 +18,7 @@ data = {
 df = pd.DataFrame(data)
 df["Year"] = df["Year"].astype(str)
 
-# ---- WELLBEING METRIC SELECTION ----
+# ---- METRIC SELECTION ----
 metric_options = [
     "Anxiety Score (West Midlands)",
     "Happiness Score (West Midlands)",
@@ -27,12 +27,12 @@ metric_options = [
 ]
 selected_metric = st.selectbox("Select a Wellbeing Metric:", metric_options)
 
-# ---- YEAR TOGGLE (RADIO BUTTON) ----
+# ---- YEAR TOGGLE FOR KPI ----
 selected_year = st.radio("Select Year to Display:", options=["2023", "2024"], horizontal=True)
 selected_year = int(selected_year)
 selected_idx = df[df["Year"] == str(selected_year)].index[0]
 
-# ---- METRIC VALUES ----
+# ---- VALUES ----
 crime_value = df.loc[selected_idx, "Total Crimes (Warwickshire)"]
 metric_value = df.loc[selected_idx, selected_metric]
 
@@ -40,7 +40,7 @@ metric_value = df.loc[selected_idx, selected_metric]
 crime_pct_change = round((df.loc[1, "Total Crimes (Warwickshire)"] - df.loc[0, "Total Crimes (Warwickshire)"]) / df.loc[0, "Total Crimes (Warwickshire)"] * 100, 2)
 metric_pct_change = round((df[selected_metric].iloc[1] - df[selected_metric].iloc[0]) / df[selected_metric].iloc[0] * 100, 2)
 
-# ---- METRIC DISPLAY ----
+# ---- KPI METRICS DISPLAY ----
 col1, col2 = st.columns(2)
 with col1:
     st.metric(label=f"Total Crimes ({selected_year})", value=f"{int(crime_value):,}", delta=f"{crime_pct_change}%", delta_color="inverse")
@@ -55,26 +55,30 @@ zoom_range = [min_crime - 200, max_crime + 200]
 # ---- PLOTLY CHART ----
 fig = go.Figure()
 
+# Custom bar colors: 2023 = blue, 2024 = purple
+bar_colors = ["#1f77b4", "#9467bd"]
+
 fig.add_trace(go.Bar(
     x=df["Year"],
     y=df["Total Crimes (Warwickshire)"],
     name="Total Crimes",
-    marker_color="skyblue",
+    marker_color=bar_colors,
     yaxis='y1'
 ))
 
+# Custom line color: turquoise
 fig.add_trace(go.Scatter(
     x=df["Year"],
     y=df[selected_metric],
     name=selected_metric,
     mode='lines+markers',
-    marker=dict(color="orange", size=10),
-    line=dict(width=3),
+    marker=dict(color="#00ced1", size=10),
+    line=dict(color="#00ced1", width=3),
     yaxis='y2'
 ))
 
 fig.update_layout(
-    title=dict(text=f"<b>Crime Volume vs {selected_metric} (2023–2024)</b>", x=0.5),
+    title=dict(text=f"<b>Crime Volume vs {selected_metric} (2023–2024)</b>", x=0.5, font=dict(size=18)),
     xaxis=dict(title="Year", type="category"),
     yaxis=dict(title="Total Crimes (Warwickshire)", side='left', range=zoom_range),
     yaxis2=dict(title=selected_metric, overlaying='y', side='right'),
