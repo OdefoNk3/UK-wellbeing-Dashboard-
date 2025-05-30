@@ -211,57 +211,70 @@ fig_map.update_layout(
 st.plotly_chart(fig_map, use_container_width=True)
 
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 st.markdown("---")
-st.subheader("📊 Types of Crime Committed in Warwickshire (2023 vs 2024)")
+st.subheader("📍 Crime Types in Warwickshire: 2023 vs 2024 (Dot Plot View)")
 
-# Load dataset
+# Load data
 df = pd.read_csv("crime_data_for_trends.csv")
 
-# Convert 'Month' to datetime and extract year
-df['Year'] = pd.to_datetime(df['Month'], errors='coerce').dt.year
-df = df[df['Year'].isin([2023, 2024])]
-df = df.dropna(subset=['Crime type'])
+# Extract and clean
+df["Year"] = pd.to_datetime(df["Month"], errors="coerce").dt.year
+df = df[df["Year"].isin([2023, 2024])]
+df = df.dropna(subset=["Crime type"])
 
-# Convert Year to string for proper discrete legend
-df['Year'] = df['Year'].astype(str)
+# Count crimes by type and year
+crime_counts = df.groupby(["Crime type", "Year"]).size().unstack(fill_value=0).reset_index()
+crime_counts["% Change"] = round(((crime_counts[2024] - crime_counts[2023]) / crime_counts[2023]) * 100, 2)
 
-# Count crimes per type and year
-crime_counts = df.groupby(['Crime type', 'Year']).size().reset_index(name='Total Crimes')
+# Sort by 2024 volume
+crime_counts = crime_counts.sort_values(by=2024, ascending=False)
 
-# Pivot to calculate % change
-pivot_df = crime_counts.pivot(index='Crime type', columns='Year', values='Total Crimes').fillna(0).reset_index()
-pivot_df['% Change'] = round(((pivot_df["2024"] - pivot_df["2023"]) / pivot_df["2023"]) * 100, 2)
+# Start plot
+fig = go.Figure()
 
-# Merge % change into long format
-crime_counts = crime_counts.merge(pivot_df[['Crime type', '% Change']], on='Crime type')
+# Add lines between 2023 and 2024 dots
+for i, row in crime_counts.iterrows():
+    fig.add_trace(go.Scatter(
+        x=[row[2023], row[2024]],
+        y=[row["Crime type"]] * 2,
+        mode='lines',
+        line=dict(color='gray', width=1),
+        showlegend=False
+    ))
 
-# Sort bars based on 2024 volume
-sort_order = crime_counts[crime_counts["Year"] == "2024"].sort_values("Total Crimes", ascending=False)["Crime type"]
-crime_counts["Crime type"] = pd.Categorical(crime_counts["Crime type"], categories=sort_order, ordered=True)
+# Add 2023 dots
+fig.add_trace(go.Scatter(
+    x=crime_counts[2023],
+    y=crime_counts["Crime type"],
+    mode='markers',
+    name='2023',
+    marker=dict(color='#1f77b4', size=10),
+    hovertemplate='2023<br>%{y}: %{x}<extra></extra>'
+))
 
-# Create the grouped horizontal bar chart
-fig = px.bar(
-    crime_counts,
-    x="Total Crimes",
-    y="Crime type",
-    color="Year",
-    orientation="h",
-    barmode="group",
-    title="Crime Types in Warwickshire (2023 vs 2024)",
-    hover_data={"% Change": True, "Total Crimes": True, "Year": True},
-    color_discrete_map={"2023": "#1f77b4", "2024": "#ff7f0e"}  # blue & orange
-)
+# Add 2024 dots
+fig.add_trace(go.Scatter(
+    x=crime_counts[2024],
+    y=crime_counts["Crime type"],
+    mode='markers',
+    name='2024',
+    marker=dict(color='#ff7f0e', size=10),
+    hovertemplate='2024<br>%{y}: %{x}<br>Change: %{customdata:.2f}%<extra></extra>',
+    customdata=crime_counts["% Change"]
+))
 
+# Layout polish
 fig.update_layout(
+    title="Dot Plot: Crime Totals per Type in 2023 vs 2024",
     xaxis_title="Total Crimes",
     yaxis_title="Crime Type",
     height=700,
     margin=dict(t=80, b=60),
-    legend_title_text="Year",  # ← This now shows blue = 2023, orange = 2024
-    coloraxis_showscale=False  # ← This prevents showing the gradient colorbar
+    legend_title_text="Year",
+    yaxis=dict(automargin=True, categoryorder="total ascending")
 )
 
 # Show in Streamlit
