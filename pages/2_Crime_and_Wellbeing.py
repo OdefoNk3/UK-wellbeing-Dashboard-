@@ -266,7 +266,7 @@ if chart_type == "Dot Plot":
         y=crime_counts["Crime type"],
         mode='markers',
         name='2023',
-        marker=dict(color='#1f77b4', size=9),
+        marker=dict(color='#FF69B4', size=9),
         customdata=crime_counts["% Change"],
         hovertemplate='2023<br>%{y}: %{x}<br>Change to 2024: %{customdata:.2f}%<extra></extra>'
     ))
@@ -276,7 +276,7 @@ if chart_type == "Dot Plot":
         y=crime_counts["Crime type"],
         mode='markers',
         name='2024',
-        marker=dict(color='#ff7f0e', size=11, line=dict(width=2, color='black')),
+        marker=dict(color='#00CED1', size=11, line=dict(width=2, color='black')),
         customdata=crime_counts["% Change"],
         hovertemplate='2024<br>%{y}: %{x}<br>Change from 2023: %{customdata:.2f}%<extra></extra>'
     ))
