@@ -145,7 +145,7 @@ fig_monthly = px.line(
     title="📅 Monthly Crime Trends in Warwickshire (2023 vs 2024)",
     labels={"Month_Name": "Month", "Total Crimes": "Total Crimes"},
     category_orders={"Month_Name": month_order},
-    color_discrete_map={2023: "royalblue", 2024: "darkorange"}
+    color_discrete_map={2023: "#FF69B4", 2024: "#00CED1"}
 )
 
 # Improve line style
