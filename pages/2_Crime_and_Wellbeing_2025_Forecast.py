@@ -84,33 +84,7 @@ fig2.patch.set_facecolor('#0e1117')
 ax2.legend(title='Year', labelcolor='white')
 st.pyplot(fig2)
 
-# ---- CRIME TOTALS BAR CHART ----
-st.header("📊 Total Crimes Per Year (2025) — ARIMA Forecast")
-bar_data = {
-    'Year': ['2023', '2024', '2025'],
-    'Total Crimes': [49331, 49062, int(future_df['Total_Crimes'].sum())]
-}
-bar_df = pd.DataFrame(bar_data)
-fig3, ax3 = plt.subplots(figsize=(6, 5))
-colors = ['#90caf9', '#42a5f5', '#0d47a1']
-bars = ax3.bar(bar_df['Year'], bar_df['Total Crimes'], color=colors)
-
-for bar in bars:
-    height = bar.get_height()
-    ax3.text(bar.get_x() + bar.get_width()/2, height + 50, f"{int(height):,}", ha='center', color='white')
-
-ax3.set_title("Total Crimes Per Year - ARIMA Forecast", color='white')
-ax3.set_ylabel("Total Crimes", color='white')
-ax3.set_ylim(min(bar_df['Total Crimes']) - 300, max(bar_df['Total Crimes']) + 300)
-ax3.grid(axis='y', linestyle='--', alpha=0.3)
-ax3.tick_params(colors='white')
-ax3.set_facecolor('#0e1117')
-fig3.patch.set_facecolor('#0e1117')
-st.pyplot(fig3)
-
-# FOOTNOTE
-st.caption("Predictions made using: Linear Regression (wellbeing), ARIMA (crime trends)")
 
 
-# FOOTNOTE
-st.caption("Predictions made using: Linear Regression (wellbeing), ARIMA (crime trends)")
+
+
