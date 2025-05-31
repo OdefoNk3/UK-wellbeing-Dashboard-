@@ -3,7 +3,12 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # ---- PAGE CONFIG ----
-st.set_page_config(page_title="Crime and Wellbeing", layout="wide")
+st.set_page_config(
+    page_title="Crime and UK Wellbeing Trends",
+    page_icon="📊",
+    layout="wide"
+)
+
 st.title("Crime and Wellbeing: Exploring Trends (2023–2024)")
 
 # ---- DATA ----
